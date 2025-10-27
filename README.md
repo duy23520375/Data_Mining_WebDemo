@@ -5,16 +5,37 @@
 ## 🚀 Tính năng
 
 - ✅ **Dự đoán Bestseller**: Dự đoán khả năng khóa học trở thành bestseller
+- 🎓 **Sequential Mining Recommendations**: Gợi ý learning path thông minh dựa trên Graph-based Sequential Mining
 - 📊 **Phân tích**: Xem lịch sử dự đoán và thống kê
 - 🎯 **Real-time**: API nhanh với FastAPI
 - 💎 **UI hiện đại**: React + TypeScript + Tailwind CSS + shadcn/ui
 - 🐳 **Docker Ready**: Deploy dễ dàng với Docker Compose
+- 🔍 **10,181 Courses**: Database thực từ Udemy với đầy đủ metadata
 
 ## 📋 Yêu cầu hệ thống
 
 - Docker Desktop (Windows/Mac) hoặc Docker Engine + Docker Compose (Linux)
 - 2GB RAM trở lên
 - Port 80 (frontend) và 8000 (backend) available
+
+## 🏁 Quick Start với Docker (Khuyến nghị)
+
+> ⚡ **Cách dễ nhất**: Chỉ cần Docker, không cần cài Python/Node.js!
+
+### Chạy Script Tự Động
+
+**Windows:**
+```cmd
+START_DOCKER.bat
+```
+
+**Linux/Mac:**
+```bash
+chmod +x START_DOCKER.sh
+./START_DOCKER.sh
+```
+
+### Hoặc dùng Docker Compose trực tiếp
 
 ## 🏁 Quick Start với Docker
 
@@ -53,34 +74,47 @@ docker-compose down
 
 ```
 Data_Mining_WebDemo/
-├── backend/                 # FastAPI Backend
-│   ├── main.py             # API endpoints
-│   ├── ml_model.py         # XGBoost model
-│   ├── models.py           # Database models
-│   ├── schemas.py          # Pydantic schemas
-│   ├── database.py         # SQLAlchemy config
-│   ├── model.pkl           # Trained ML model
-│   ├── requirements.txt    # Python dependencies
-│   ├── Dockerfile          # Backend container
-│   └── .dockerignore
+├── backend/                      # FastAPI Backend
+│   ├── main.py                  # API endpoints
+│   ├── ml_model.py              # XGBoost model
+│   ├── sequential_mining.py     # 🆕 Sequential Mining module
+│   ├── models.py                # Database models
+│   ├── schemas.py               # Pydantic schemas
+│   ├── database.py              # SQLAlchemy config
+│   ├── model.pkl                # Trained ML model
+│   ├── data_final_fix.csv       # 🆕 10K+ Udemy courses
+│   ├── requirements.txt         # Python dependencies
+│   ├── test_sequential_mining.py # 🆕 Test script
+│   ├── test_api.ps1/sh          # 🆕 API test scripts
+│   ├── Dockerfile               # Backend container
+│   └── SEQUENTIAL_MINING_README.md # 🆕 Backend docs
 │
-├── frontend/               # React Frontend
+├── frontend/                    # React Frontend
 │   ├── src/
-│   │   ├── pages/         # React pages
-│   │   │   ├── Predict.tsx      # Prediction form
-│   │   │   ├── Analytics.tsx    # Analytics dashboard
-│   │   │   └── About.tsx        # About page
-│   │   ├── components/    # UI components (shadcn/ui)
-│   │   ├── services/      # API service
-│   │   │   └── api.ts            # API client
+│   │   ├── pages/              # React pages
+│   │   │   ├── Predict.tsx            # Prediction form
+│   │   │   ├── Analytics.tsx          # Analytics dashboard
+│   │   │   ├── Recommend.tsx          # 🆕 Sequential Mining UI
+│   │   │   └── About.tsx              # About page
+│   │   ├── components/         # UI components (shadcn/ui)
+│   │   ├── services/           # API service
+│   │   │   └── api.ts                 # 🆕 Updated với recommendation methods
 │   │   └── lib/
 │   │       └── featureEngineering.ts  # Feature transformation
 │   ├── package.json
-│   ├── Dockerfile         # Frontend container
-│   ├── nginx.conf         # Nginx config
+│   ├── Dockerfile              # Production container
+│   ├── Dockerfile.dev          # 🆕 Development container
+│   ├── nginx.conf              # Nginx config
 │   └── .dockerignore
 │
-└── docker-compose.yml     # Orchestration
+├── docker-compose.yml           # Production orchestration
+├── docker-compose.dev.yml       # 🆕 Development orchestration
+├── START_DOCKER.bat/.sh         # 🆕 Easy start scripts
+├── DOCKER_GUIDE.md              # 🆕 Docker documentation
+├── QUICK_START_DOCKER.md        # 🆕 Quick start guide
+├── SEQUENTIAL_MINING_GUIDE.md   # 🆕 Sequential Mining docs
+├── graph_based_sequential_mining.ipynb    # Research notebook
+└── sequential_mining_algorithm.ipynb      # Research notebook
 ```
 
 ## 🎯 Cách sử dụng
@@ -109,6 +143,43 @@ Data_Mining_WebDemo/
 - Xem tất cả dự đoán đã thực hiện
 - Thống kê tổng quan
 - Quản lý lịch sử
+
+### 3. Recommendations Page (Sequential Mining) 🆕
+
+1. Nhập topic/skill bạn muốn học (ví dụ: "Machine Learning", "React JS")
+2. Click "Tìm Learning Path"
+3. Nhận được:
+   - **Complete Learning Path**: Thứ tự logic từ cơ bản đến nâng cao
+   - **Top Courses**: 3 khóa học tốt nhất cho mỗi bước
+   - **Smart Ranking**: Ưu tiên Bestseller, Rating cao, Học viên nhiều
+
+**Ví dụ**: Input "Machine Learning" → Output:
+```
+Python → SQL → Numpy → Pandas → Data Science → Machine Learning
+```
+Với top 3 courses cho mỗi bước!
+
+## 🎓 Sequential Mining System
+
+### Knowledge Graph
+- **25+ Topics**: ML, AI, Web Dev, Programming, DevOps...
+- **Directed Graph**: Prerequisites relationships (A → B → C)
+- **Algorithms**: NetworkX topological sort
+
+### Path Finding
+1. Input: Target topic (e.g., "Machine Learning")
+2. Find all prerequisites using `nx.ancestors()`
+3. Create curriculum graph
+4. Topological sort for logical order
+5. Map courses to each step
+6. Rank: Bestseller > Rating > Students
+
+### Data Source
+- **10,181 courses** từ Udemy
+- Real metadata: title, rating, students, price, topics...
+- Parsed `related_topics` để map vào graph
+
+**Xem chi tiết**: [SEQUENTIAL_MINING_GUIDE.md](SEQUENTIAL_MINING_GUIDE.md)
 
 ## 🔬 Machine Learning Pipeline
 

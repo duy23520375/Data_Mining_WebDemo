@@ -19,6 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Ensure CSV file is present
+RUN ls -la /app/data_final_fix.csv || echo "CSV file will be mounted via volume"
+
 # Create directory for database
 RUN mkdir -p /app/data
 

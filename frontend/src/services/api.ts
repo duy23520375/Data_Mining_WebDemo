@@ -55,6 +55,55 @@ export interface Stats {
   message: string;
 }
 
+// ============== Sequential Mining / Recommendation Interfaces ==============
+
+export interface Course {
+  title: string;
+  rating: number;
+  students: number;
+  is_bestseller: boolean;
+  instructor: string;
+  price: number;
+  lectures: number;
+  sections: number;
+  duration: string;
+  url: string;
+  topics?: string[];
+}
+
+export interface RecommendationStep {
+  step_number: number;
+  topic: string;
+  courses: Course[];
+  has_courses: boolean;
+}
+
+export interface RecommendationRequest {
+  target_topic: string;
+  max_steps?: number;
+  courses_per_step?: number;
+}
+
+export interface RecommendationResponse {
+  success: boolean;
+  message: string;
+  target_topic?: string;
+  path: string[];
+  total_steps: number;
+  steps: RecommendationStep[];
+}
+
+export interface TopicsResponse {
+  topics: string[];
+  count: number;
+}
+
+export interface SearchResponse {
+  courses: Course[];
+  count: number;
+  keyword: string;
+}
+
 class APIService {
   private baseURL: string;
 
@@ -143,6 +192,62 @@ class APIService {
     
     if (!response.ok) {
       throw new Error('Failed to fetch stats');
+    }
+
+    return response.json();
+  }
+
+  // ============== Sequential Mining / Recommendation Methods ==============
+
+  /**
+   * Lấy recommendation dựa trên sequential mining
+   * @param request - Request chứa target topic và options
+   * @returns RecommendationResponse với learning path và courses
+   */
+  async getRecommendations(request: RecommendationRequest): Promise<RecommendationResponse> {
+    const response = await fetch(`${this.baseURL}/recommend/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to get recommendations');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Lấy danh sách tất cả topics có sẵn trong knowledge graph
+   * @returns TopicsResponse với danh sách topics
+   */
+  async getAvailableTopics(): Promise<TopicsResponse> {
+    const response = await fetch(`${this.baseURL}/topics/`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch topics');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Tìm kiếm khóa học theo keyword
+   * @param keyword - Từ khóa tìm kiếm
+   * @param limit - Số lượng kết quả tối đa (default: 10)
+   * @returns SearchResponse với danh sách khóa học
+   */
+  async searchCourses(keyword: string, limit: number = 10): Promise<SearchResponse> {
+    const response = await fetch(
+      `${this.baseURL}/search/?keyword=${encodeURIComponent(keyword)}&limit=${limit}`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to search courses');
     }
 
     return response.json();

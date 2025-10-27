@@ -5,7 +5,9 @@ from database import SessionLocal, engine
 import models
 from schemas import UdemyPredictionBase, UdemyPredictionResponse
 from ml_model import PredictionInput, model as ml_model
-from typing import List
+from sequential_mining import get_recommender
+from typing import List, Optional
+from pydantic import BaseModel
 
 app = FastAPI(
     title="Udemy Price Prediction API",
@@ -143,4 +145,83 @@ async def get_stats(db: Session = Depends(get_db)):
         "total_predictions": total_predictions,
         "message": "Thống kê hệ thống"
     }
+
+# ============== SEQUENTIAL MINING & RECOMMENDATION ENDPOINTS ==============
+
+class RecommendationRequest(BaseModel):
+    """Request body cho recommendation"""
+    target_topic: str
+    max_steps: Optional[int] = None
+    courses_per_step: int = 3
+
+@app.post("/recommend/")
+async def get_recommendations(request: RecommendationRequest):
+    """
+    Endpoint chính để lấy recommendation dựa trên sequential mining
+    
+    - **target_topic**: Topic/skill mục tiêu muốn học (e.g., "Machine Learning", "React JS")
+    - **max_steps**: Số bước tối đa trong learning path (None = toàn bộ)
+    - **courses_per_step**: Số khóa học recommend cho mỗi bước (default: 3)
+    
+    Returns:
+        - success: True/False
+        - message: Thông báo
+        - target_topic: Topic đã search
+        - path: Danh sách các topic trong learning path
+        - total_steps: Tổng số bước
+        - steps: Chi tiết từng bước với courses
+    """
+    try:
+        recommender = get_recommender()
+        result = recommender.get_full_recommendation(
+            target_topic=request.target_topic,
+            max_steps=request.max_steps,
+            courses_per_step=request.courses_per_step
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi tạo recommendation: {str(e)}")
+
+@app.get("/topics/")
+async def get_available_topics():
+    """
+    Lấy danh sách tất cả topics có trong knowledge graph
+    
+    Returns:
+        - topics: List các topic có sẵn
+        - count: Số lượng topics
+    """
+    try:
+        recommender = get_recommender()
+        topics = recommender.get_available_topics()
+        return {
+            "topics": topics,
+            "count": len(topics)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi lấy topics: {str(e)}")
+
+@app.get("/search/")
+async def search_courses(keyword: str, limit: int = 10):
+    """
+    Tìm kiếm khóa học theo keyword
+    
+    - **keyword**: Từ khóa tìm kiếm
+    - **limit**: Số lượng kết quả tối đa (default: 10)
+    
+    Returns:
+        - courses: List các khóa học phù hợp
+        - count: Số lượng kết quả
+        - keyword: Từ khóa đã tìm
+    """
+    try:
+        recommender = get_recommender()
+        courses = recommender.search_courses_by_keyword(keyword, limit)
+        return {
+            "courses": courses,
+            "count": len(courses),
+            "keyword": keyword
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi tìm kiếm: {str(e)}")
 
