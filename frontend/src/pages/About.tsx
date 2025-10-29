@@ -1,199 +1,93 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Brain, Database, Zap, TrendingUp, GitBranch, CheckCircle } from "lucide-react";
+import { Users, GraduationCap } from "lucide-react";
 
 const About = () => {
-  const mlPipeline = [
-    { step: "Data Collection", icon: Database, desc: "Scraped 12K+ Udemy courses" },
-    { step: "Feature Engineering", icon: GitBranch, desc: "Extracted 25+ features" },
-    { step: "Model Training", icon: Brain, desc: "AutoML with XGBoost, Random Forest" },
-    { step: "Deployment", icon: Zap, desc: "Real-time prediction API" },
-  ];
-
-  const modelComparison = [
-    { model: "Random Forest", accuracy: "87.3%", precision: "85.1%", recall: "84.2%" },
-    { model: "XGBoost", accuracy: "89.7%", precision: "88.4%", recall: "87.9%" },
-    { model: "Logistic Regression", accuracy: "82.1%", precision: "80.5%", recall: "79.8%" },
-    { model: "Neural Network", accuracy: "86.5%", precision: "84.8%", recall: "83.6%" },
-  ];
-
-  const topFeatures = [
-    { name: "num_reviews", importance: 0.28, desc: "Number of course reviews" },
-    { name: "rating", importance: 0.22, desc: "Average course rating" },
-    { name: "num_students", importance: 0.18, desc: "Total enrolled students" },
-    { name: "price", importance: 0.12, desc: "Course price" },
-    { name: "total_duration", importance: 0.08, desc: "Total course hours" },
+  const teamMembers = [
+    { name: "A", studentId: "2352xxxx" },
+    { name: "B", studentId: "2352xxxx" },
+    { name: "C", studentId: "22352xxxx" },
+    { name: "D", studentId: "2352xxxx" },
+    { name: "E", studentId: "22352xxxx" },
+    { name: "F", studentId: "2352xxxx" },
+    { name: "G", studentId: "22352xxxx" },
+    { name: "H", studentId: "2352xxxx" }
   ];
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
         <div className="space-y-2 animate-fade-in text-center">
-          <h1 className="text-4xl font-bold">About This Project</h1>
-          <p className="text-muted-foreground">Machine Learning Explainability & Architecture</p>
+          <div className="flex justify-center items-center gap-3 mb-4">
+            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Users className="w-8 h-8 text-primary" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold">Our Team</h1>
+          <p className="text-muted-foreground text-lg">
+            Meet the talented members behind this project
+          </p>
         </div>
 
-        {/* Project Overview */}
-        <Card className="gradient-card border-border/50">
-          <CardHeader>
-            <CardTitle>Project Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground leading-relaxed">
-              This project leverages advanced machine learning techniques to analyze Udemy course data, predict course success (bestseller probability), 
-              and provide personalized course recommendations. Built with AutoML frameworks and modern web technologies, it demonstrates the full ML pipeline 
-              from data collection to production deployment.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Badge className="bg-primary/10 text-primary border-primary/20">Machine Learning</Badge>
-              <Badge className="bg-secondary/10 text-secondary border-secondary/20">AutoML</Badge>
-              <Badge className="bg-accent/10 text-accent border-accent/20">React</Badge>
-              <Badge className="bg-primary/10 text-primary border-primary/20">TypeScript</Badge>
-              <Badge className="bg-secondary/10 text-secondary border-secondary/20">Python</Badge>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Team Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {teamMembers.map((member, index) => (
+            <Card 
+              key={index} 
+              className="gradient-card border-border/50 hover:shadow-glow transition-all duration-300 hover:scale-105 group cursor-pointer"
+            >
+              <CardContent className="p-6">
+                {/* Avatar */}
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 border-2 border-primary/30 flex items-center justify-center group-hover:from-primary/30 group-hover:to-secondary/30 transition-colors">
+                  <span className="text-2xl font-bold text-primary">
+                    {member.name.split(' ').pop()?.[0]}
+                  </span>
+                </div>
 
-        {/* ML Pipeline */}
+                {/* Name */}
+                <h3 className="text-xl font-semibold text-center mb-2 group-hover:text-primary transition-colors">
+                  {member.name}
+                </h3>
+
+                {/* Student ID */}
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <GraduationCap className="w-4 h-4" />
+                  <span className="font-mono text-sm">{member.studentId}</span>
+                </div>
+
+                {/* Decorative Elements */}
+                <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary/20 group-hover:bg-primary/40 transition-colors"></div>
+                <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-secondary/20 group-hover:bg-secondary/40 transition-colors"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Team Stats */}
         <Card className="gradient-card border-border/50">
           <CardHeader>
-            <CardTitle>ML Pipeline Architecture</CardTitle>
+            <CardTitle className="flex items-center gap-2 justify-center">
+              <Users className="w-5 h-5 text-primary" />
+              Team Overview
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-4 gap-4">
-              {mlPipeline.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div key={index} className="relative">
-                    {index < mlPipeline.length - 1 && (
-                      <div className="hidden md:block absolute top-8 left-full w-full h-0.5 bg-primary/30 -z-10" />
-                    )}
-                    <div className="space-y-3 text-center">
-                      <div className="w-16 h-16 mx-auto rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                        <Icon className="w-8 h-8 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{item.step}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{item.desc}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Model Comparison */}
-        <Card className="gradient-card border-border/50">
-          <CardHeader>
-            <CardTitle>Model Performance Comparison</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border/50">
-                    <th className="text-left py-3 px-4">Model</th>
-                    <th className="text-right py-3 px-4">Accuracy</th>
-                    <th className="text-right py-3 px-4">Precision</th>
-                    <th className="text-right py-3 px-4">Recall</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {modelComparison.map((model, index) => (
-                    <tr key={index} className="border-b border-border/30 hover:bg-background/50 transition-colors">
-                      <td className="py-3 px-4 font-medium">{model.model}</td>
-                      <td className="py-3 px-4 text-right">
-                        <span className={index === 1 ? "text-accent font-semibold" : ""}>
-                          {model.accuracy}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">{model.precision}</td>
-                      <td className="py-3 px-4 text-right">{model.recall}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-4 p-4 rounded-lg bg-accent/10 border border-accent/20">
-              <div className="flex items-start gap-2">
-                <CheckCircle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-accent">Best Model: XGBoost</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    XGBoost achieved the highest accuracy (89.7%) and was selected for production deployment
-                  </p>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              <div className="space-y-2">
+                <div className="text-3xl font-bold text-primary">{teamMembers.length}</div>
+                <div className="text-sm text-muted-foreground">Total Members</div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* SHAP Feature Importance */}
-        <Card className="gradient-card border-border/50">
-          <CardHeader>
-            <CardTitle>SHAP Feature Importance</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {topFeatures.map((feature, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium">{feature.name}</span>
-                  <span className="text-primary">{(feature.importance * 100).toFixed(1)}%</span>
-                </div>
-                <div className="h-2 bg-background/50 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-500"
-                    style={{ width: `${feature.importance * 100}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">{feature.desc}</p>
+              <div className="space-y-2">
+                <div className="text-3xl font-bold text-secondary">8</div>
+                <div className="text-sm text-muted-foreground">Students</div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Technologies */}
-        <Card className="gradient-card border-border/50">
-          <CardHeader>
-            <CardTitle>Technologies Used</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <h3 className="font-semibold text-primary">Backend & ML</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-primary" />
-                    Python, Pandas, NumPy for data processing
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-primary" />
-                    Scikit-learn, XGBoost for ML models
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-primary" />
-                    SHAP for model explainability
-                  </li>
-                </ul>
+              <div className="space-y-2">
+                <div className="text-3xl font-bold text-accent">100%</div>
+                <div className="text-sm text-muted-foreground">Dedication</div>
               </div>
-              <div className="space-y-3">
-                <h3 className="font-semibold text-secondary">Frontend</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-secondary" />
-                    React, TypeScript, Tailwind CSS
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-secondary" />
-                    Recharts for data visualization
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-secondary" />
-                    Radix UI for accessible components
-                  </li>
-                </ul>
+              <div className="space-y-2">
+                <div className="text-3xl font-bold text-primary">1</div>
+                <div className="text-sm text-muted-foreground">Amazing Project</div>
               </div>
             </div>
           </CardContent>
