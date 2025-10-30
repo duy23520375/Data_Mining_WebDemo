@@ -10,7 +10,7 @@ import { Target, TrendingUp, AlertCircle, Sparkles, Loader2, Star, Users, Clock,
 import { Progress } from "@/components/ui/progress";
 
 import { apiService } from "@/services/api";
-import { engineerFeatures, validateCourseInput, type BasicCourseInput } from "@/lib/featureEngineering";
+import { prepareRawInput, validateCourseInput, type BasicCourseInput } from "@/lib/featureEngineering";
 
 const Predict = () => {
   const [prediction, setPrediction] = useState<{
@@ -52,11 +52,11 @@ const Predict = () => {
 
     setIsLoading(true);
     try {
-      // Feature engineering
-      const features = engineerFeatures(input);
+      // Prepare raw input (backend sẽ tự feature engineering)
+      const rawInput = prepareRawInput(input);
       
       // Gọi API
-      const result = await apiService.predict(features);
+      const result = await apiService.predict(rawInput);
       
       setPrediction({
         label: result.prediction,

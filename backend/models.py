@@ -7,23 +7,18 @@ class UdemyPrediction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     
-    # Input features - 11 features sau feature engineering
-    rating = Column(Float)
-    discount = Column(Float)
-    log_num_reviews = Column(Float)
-    log_num_students = Column(Float)
-    log_price = Column(Float)
-    log_total_length_minutes = Column(Float)
-    sqrt_sections = Column(Float)
-    effective_price = Column(Float)
-    popularity_score = Column(Float)
-    price_per_hour = Column(Float)
-    discount_category = Column(Integer)
+    # RAW INPUT FEATURES (7 features gốc từ user)
+    rating = Column(Float, nullable=False)
+    discount = Column(Float, nullable=False)
+    num_reviews = Column(Integer, nullable=False)
+    num_students = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)
+    total_length_minutes = Column(Integer, nullable=False)
+    sections = Column(Integer, nullable=False)
     
-    # Prediction output - Classification (Bestseller hoặc Not Bestseller)
-    prediction = Column(String)
-    probability = Column(Float)  # Xác suất dự đoán
+    # PREDICTION OUTPUT
+    prediction = Column(String, nullable=False)  # "Bestseller" hoặc "Not Bestseller"
+    probability = Column(Float, nullable=False)  # Xác suất dự đoán (0.0 - 1.0)
     
-    # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-
+    # METADATA
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

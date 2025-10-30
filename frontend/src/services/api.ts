@@ -3,9 +3,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export interface PredictionInput {
-  // 7 RAW features - backend sẽ tự feature engineering
+  // 7 RAW features - backend sẽ tự động feature engineering
   rating: number;              // 0.0 - 5.0
-  discount: number;            // 0.0 - 1.0 (0% - 100%)
+  discount: number;            // 0.0 - 1.0 (0% = 0.0, 100% = 1.0)
   num_reviews: number;         // >= 0
   num_students: number;        // >= 0
   price: number;               // > 0 (VND)
@@ -16,10 +16,9 @@ export interface PredictionInput {
 export interface PredictionResponse {
   id: number;
   prediction: string; // "Bestseller" or "Not Bestseller"
-  probability: number;
-  confidence_level: string; // "Low", "Medium", "High"
+  probability: number; // 0.0 - 1.0
   created_at: string;
-  // ... all raw input features (7 features)
+  // RAW input features (7 features)
   rating: number;
   discount: number;
   num_reviews: number;
@@ -31,10 +30,6 @@ export interface PredictionResponse {
 
 export interface Stats {
   total_predictions: number;
-  bestseller_count: number;
-  not_bestseller_count: number;
-  bestseller_rate: number;
-  avg_probability: number;
   message: string;
 }
 
