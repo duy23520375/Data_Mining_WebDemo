@@ -3,51 +3,29 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export interface PredictionInput {
-  // 18 features sau feature engineering
-  rating: number;
-  num_students: number;
-  price: number;
-  discount: number;
-  lectures: number;
-  total_length_minutes: number;
-  log_num_reviews: number;
-  log_num_students: number;
-  price_capped: number;
-  log_price: number;
-  log_total_length_minutes: number;
-  sqrt_sections: number;
-  sqrt_lectures: number;
-  effective_price: number;
-  popularity_score: number;
-  rating_x_students: number;
-  price_per_hour: number;
-  discount_category: number;
+  // 7 RAW features - backend sẽ tự động feature engineering
+  rating: number;              // 0.0 - 5.0
+  discount: number;            // 0.0 - 1.0 (0% = 0.0, 100% = 1.0)
+  num_reviews: number;         // >= 0
+  num_students: number;        // >= 0
+  price: number;               // > 0 (VND)
+  total_length_minutes: number; // > 0 (minutes)
+  sections: number;            // > 0
 }
 
 export interface PredictionResponse {
   id: number;
   prediction: string; // "Bestseller" or "Not Bestseller"
-  probability: number;
+  probability: number; // 0.0 - 1.0
   created_at: string;
-  // ... all input features
+  // RAW input features (7 features)
   rating: number;
+  discount: number;
+  num_reviews: number;
   num_students: number;
   price: number;
-  discount: number;
-  lectures: number;
   total_length_minutes: number;
-  log_num_reviews: number;
-  log_num_students: number;
-  price_capped: number;
-  log_price: number;
-  log_total_length_minutes: number;
-  sqrt_sections: number;
-  sqrt_lectures: number;
-  effective_price: number;
-  popularity_score: number;
-  rating_x_students: number;
-  price_per_hour: number;
-  discount_category: number;
+  sections: number;
 }
 
 export interface Stats {

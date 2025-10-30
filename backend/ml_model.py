@@ -5,36 +5,39 @@ from pydantic import BaseModel, Field
 from typing import Optional
 import os
 
-# Định nghĩa input từ người dùng - 18 features sau feature engineering
+# ============== INPUT/OUTPUT SCHEMAS ==============
+
 class PredictionInput(BaseModel):
-    rating: float = Field(description="Đánh giá (0.0 - 5.0)")
-    num_students: float = Field(description="Số lượng học viên")
-    price: float = Field(description="Giá khóa học")
-    discount: float = Field(description="Giảm giá (0.0 - 1.0)")
-    lectures: int = Field(description="Số lượng bài giảng")
-    total_length_minutes: int = Field(description="Tổng thời lượng (phút)")
-    log_num_reviews: float = Field(description="Log của số lượng đánh giá")
-    log_num_students: float = Field(description="Log của số lượng học viên")
-    price_capped: float = Field(description="Giá đã capped")
-    log_price: float = Field(description="Log của giá")
-    log_total_length_minutes: float = Field(description="Log của tổng thời lượng")
-    sqrt_sections: float = Field(description="Căn bậc 2 của số sections")
-    sqrt_lectures: float = Field(description="Căn bậc 2 của số lectures")
-    effective_price: float = Field(description="Giá hiệu quả")
-    popularity_score: float = Field(description="Điểm độ phổ biến")
-    rating_x_students: float = Field(description="Rating nhân với số học viên")
-    price_per_hour: float = Field(description="Giá mỗi giờ")
-    discount_category: int = Field(description="Danh mục giảm giá")
+    """
+    RAW INPUT từ người dùng - 7 features cơ bản
+    Backend sẽ tự động thực hiện feature engineering
+    """
+    rating: float = Field(ge=0.0, le=5.0, description="Đánh giá khóa học (0.0 - 5.0)")
+    discount: float = Field(ge=0.0, le=1.0, description="Mức giảm giá (0.0 = 0%, 1.0 = 100%)")
+    num_reviews: int = Field(ge=0, description="Số lượng đánh giá")
+    num_students: int = Field(ge=0, description="Số lượng học viên")
+    price: float = Field(gt=0, description="Giá khóa học (VND)")
+    total_length_minutes: int = Field(gt=0, description="Tổng thời lượng (phút)")
+    sections: int = Field(gt=0, description="Số sections")
 
 class PredictionOutput(BaseModel):
     prediction: str
     probability: float
 
+# ============== MODEL CLASS ==============
+
 class UdemyBestsellerModel:
+    """
+    Model dự đoán Udemy Bestseller
+    Nhận 11 features đã engineered từ frontend, scale và predict
+    """
+    
     def __init__(self):
+        # Paths
         model_path = 'model.pkl'
+        scaler_path = 'scaler_final.pkl'
         
-        # Load model (XGBClassifier)
+        # Load model (Random Forest sau GridSearch)
         if os.path.exists(model_path):
             self.model = joblib.load(model_path)
             print(f"✓ Đã load model từ {model_path}")
@@ -45,42 +48,150 @@ class UdemyBestsellerModel:
             print(f"⚠ Warning: {model_path} không tồn tại.")
             self.model = None
         
+        # Load scaler (RobustScaler đã fit trên train set)
+        if os.path.exists(scaler_path):
+            self.scaler = joblib.load(scaler_path)
+            print(f"✓ Đã load scaler từ {scaler_path}")
+        else:
+            print(f"⚠ Warning: {scaler_path} không tồn tại.")
+            self.scaler = None
+        
+        # Thứ tự features (11 features) - PHẢI ĐÚNG với lúc train
+        self.FEATURE_NAMES = [
+            'rating', 'discount', 'log_num_reviews', 
+            'log_num_students', 'log_price', 'log_total_length_minutes', 
+            'sqrt_sections', 'effective_price', 'popularity_score', 
+            'price_per_hour', 'discount_category'
+        ]
+        
         # Mapping cho classification
         self.target_mapping = {
             0: 'Not Bestseller',
             1: 'Bestseller'
         }
-
-    def preprocess_input(self, input_data: PredictionInput):
+    
+    def preprocess_input(self, input_data: PredictionInput) -> pd.DataFrame:
         """
-        Tiền xử lý dữ liệu đầu vào theo đúng thứ tự 18 features
+        Tiền xử lý raw input thành 11 engineered features
+        
+        Các bước:
+        1. Log transformation: num_reviews, num_students, price, total_length_minutes
+        2. Sqrt transformation: sections
+        3. Feature engineering: effective_price, popularity_score, price_per_hour
+        4. Discount category encoding
+        5. Scaling với RobustScaler
+        
+        Args:
+            input_data: PredictionInput với 7 raw features
+            
+        Returns:
+            DataFrame đã được scale với 11 features
         """
-        # Thứ tự features phải giống với lúc train model
-        ordered_columns = [
-            'rating', 'num_students', 'price', 'discount', 
-            'lectures', 'total_length_minutes', 'log_num_reviews', 
-            'log_num_students', 'price_capped', 'log_price', 
-            'log_total_length_minutes', 'sqrt_sections', 'sqrt_lectures', 
-            'effective_price', 'popularity_score', 'rating_x_students', 
-            'price_per_hour', 'discount_category'
-        ]
+        # Chuyển input thành dict
+        data = input_data.dict()
+        df = pd.DataFrame([data])
         
-        data_dict = input_data.dict()
+        print("\n" + "="*80)
+        print("📥 RAW INPUT (trước khi xử lý):")
+        print("="*80)
+        print(f"  rating: {data['rating']}")
+        print(f"  discount: {data['discount']} ({data['discount']*100:.1f}%)")
+        print(f"  num_reviews: {data['num_reviews']:,}")
+        print(f"  num_students: {data['num_students']:,}")
+        print(f"  price: {data['price']:,.0f} VND")
+        print(f"  total_length_minutes: {data['total_length_minutes']} min (~{data['total_length_minutes']/60:.1f} hours)")
+        print(f"  sections: {data['sections']}")
         
-        # Tạo DataFrame với đúng thứ tự cột
-        X = pd.DataFrame([[data_dict[col] for col in ordered_columns]], 
-                        columns=ordered_columns)
+        # 1. LOG TRANSFORMATIONS (dùng log1p để tránh log(0))
+        df['log_num_reviews'] = np.log1p(df['num_reviews'])
+        df['log_num_students'] = np.log1p(df['num_students'])
+        df['log_price'] = np.log1p(df['price'])
+        df['log_total_length_minutes'] = np.log1p(df['total_length_minutes'])
         
-        print("Input features:", X.columns.tolist())
-        print("Input values:", X.values.tolist()[0])
+        # 2. SQRT TRANSFORMATION
+        df['sqrt_sections'] = np.sqrt(np.clip(df['sections'], 0, None))
         
-        return X
-
-    def predict(self, input_data: PredictionInput):
+        # 3. FEATURE ENGINEERING
+        # Giá hiệu quả sau giảm giá
+        df['effective_price'] = df['price'] * (1 - np.clip(df['discount'], 0, 1))
+        
+        # Điểm độ phổ biến (trung bình students và reviews)
+        df['popularity_score'] = (df['num_students'] + df['num_reviews']) / 2
+        
+        # Giá mỗi giờ
+        df['price_per_hour'] = df['price'] / (df['total_length_minutes'] / 60 + 1e-3)
+        
+        # 4. DISCOUNT CATEGORY ENCODING
+        # Chia discount thành 3 bins: Low [0-0.3), Medium [0.3-0.6), High [0.6-1.0]
+        bins = [0, 0.3, 0.6, 1.0]
+        labels = ['Low', 'Medium', 'High']
+        
+        # pd.cut trả về category
+        discount_cat = pd.cut(
+            np.clip(df['discount'], 0, 1), 
+            bins=bins, 
+            labels=labels, 
+            include_lowest=True
+        )
+        
+        # LabelEncoder mặc định sort theo alphabet: High=0, Low=1, Medium=2
+        le_order = sorted(labels)  # ['High', 'Low', 'Medium']
+        discount_map = {name: idx for idx, name in enumerate(le_order)}
+        df['discount_category'] = discount_cat.astype(str).map(discount_map).astype(int)
+        
+        print("\n" + "="*80)
+        print("🔧 ENGINEERED FEATURES (sau feature engineering):")
+        print("="*80)
+        print(f"  rating: {df['rating'].values[0]}")
+        print(f"  discount: {df['discount'].values[0]}")
+        print(f"  log_num_reviews: {df['log_num_reviews'].values[0]:.6f}")
+        print(f"  log_num_students: {df['log_num_students'].values[0]:.6f}")
+        print(f"  log_price: {df['log_price'].values[0]:.6f}")
+        print(f"  log_total_length_minutes: {df['log_total_length_minutes'].values[0]:.6f}")
+        print(f"  sqrt_sections: {df['sqrt_sections'].values[0]:.6f}")
+        print(f"  effective_price: {df['effective_price'].values[0]:,.2f} VND")
+        print(f"  popularity_score: {df['popularity_score'].values[0]:,.2f}")
+        print(f"  price_per_hour: {df['price_per_hour'].values[0]:,.2f} VND/hour")
+        print(f"  discount_category: {df['discount_category'].values[0]} ({discount_cat.values[0]})")
+        
+        # 5. CHỈ GIỮ 11 FEATURES CUỐI CÙNG (đúng thứ tự)
+        df_model = df[self.FEATURE_NAMES].copy()
+        
+        print("\n" + "="*80)
+        print("📊 FEATURES TRƯỚC KHI SCALE:")
+        print("="*80)
+        print(df_model.to_string(index=False))
+        
+        # 6. SCALING với RobustScaler
+        if self.scaler is not None:
+            X_scaled = self.scaler.transform(df_model)
+            df_scaled = pd.DataFrame(X_scaled, columns=self.FEATURE_NAMES)
+            
+            print("\n" + "="*80)
+            print("⚖️ FEATURES SAU KHI SCALE (RobustScaler):")
+            print("="*80)
+            print(df_scaled.to_string(index=False))
+            print("="*80 + "\n")
+            
+            return df_scaled
+        else:
+            print("⚠ Warning: Scaler không tồn tại, trả về data chưa scale")
+            return df_model
+    
+    def predict(self, input_data: PredictionInput) -> dict:
         """
-        Dự đoán bestseller
-        Returns: {"prediction": str, "probability": float}
+        Dự đoán bestseller từ raw input
+        
+        Args:
+            input_data: PredictionInput với 7 raw features
+            
+        Returns:
+            {
+                "prediction": "Bestseller" hoặc "Not Bestseller",
+                "probability": float (0-1)
+            }
         """
+        # Preprocess (feature engineering + scaling)
         X_processed = self.preprocess_input(input_data)
         
         if self.model is not None:
@@ -95,7 +206,7 @@ class UdemyBestsellerModel:
             else:
                 probability = 1.0
             
-            print(f"Prediction: {prediction_label} (probability: {probability:.4f})")
+            print(f"✓ Prediction: {prediction_label} (prob: {probability:.4f})")
             
             return {
                 "prediction": prediction_label,
@@ -103,12 +214,17 @@ class UdemyBestsellerModel:
             }
         else:
             # Dummy prediction nếu chưa có model
+            print("⚠ Warning: Model không tồn tại, trả về dummy prediction")
             return {
                 "prediction": "Not Bestseller",
                 "probability": 0.5
             }
 
 
-# Khởi tạo mô hình để dùng trong FastAPI
+# ============== KHỞI TẠO MODEL (Singleton) ==============
+
+# Khởi tạo model một lần khi module được import
 model = UdemyBestsellerModel()
 
+# Export để dùng trong FastAPI
+__all__ = ['model', 'PredictionInput', 'PredictionOutput']

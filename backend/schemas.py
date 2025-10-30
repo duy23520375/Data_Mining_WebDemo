@@ -2,30 +2,58 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 
+# ============== RAW INPUT SCHEMA (7 features) ==============
+
 class UdemyPredictionBase(BaseModel):
     """
-    Input features sau feature engineering - 13 features
+    RAW INPUT từ người dùng - 7 features cơ bản
+    Backend sẽ tự động thực hiện feature engineering
     """
-    rating: float = Field(description="Đánh giá (0.0 - 5.0)")
-    num_students: float = Field(description="Số lượng học viên")
-    price: float = Field(description="Giá khóa học")
-    discount: float = Field(description="Giảm giá (0.0 - 1.0)")
-    lectures: int = Field(description="Số lượng bài giảng")
-    total_length_minutes: int = Field(description="Tổng thời lượng (phút)")
-    log_num_reviews: float = Field(description="Log của số lượng đánh giá")
-    log_num_students: float = Field(description="Log của số lượng học viên")
-    price_capped: float = Field(description="Giá đã capped")
-    log_price: float = Field(description="Log của giá")
-    log_total_length_minutes: float = Field(description="Log của tổng thời lượng")
-    sqrt_sections: float = Field(description="Căn bậc 2 của số sections")
-    sqrt_lectures: float = Field(description="Căn bậc 2 của số lectures")
-    effective_price: float = Field(description="Giá hiệu quả")
-    popularity_score: float = Field(description="Điểm độ phổ biến")
-    rating_x_students: float = Field(description="Rating nhân với số học viên")
-    price_per_hour: float = Field(description="Giá mỗi giờ")
-    discount_category: int = Field(description="Danh mục giảm giá")
+    rating: float = Field(
+        ge=0.0,
+        le=5.0,
+        description="Đánh giá khóa học (0.0 - 5.0)",
+        example=4.5
+    )
+    discount: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Mức giảm giá (0.0 = 0%, 1.0 = 100%)",
+        example=0.75
+    )
+    num_reviews: int = Field(
+        ge=0,
+        description="Số lượng đánh giá",
+        example=1500
+    )
+    num_students: int = Field(
+        ge=0,
+        description="Số lượng học viên",
+        example=50000
+    )
+    price: float = Field(
+        gt=0,
+        description="Giá khóa học (VND)",
+        example=299000
+    )
+    total_length_minutes: int = Field(
+        gt=0,
+        description="Tổng thời lượng khóa học (phút)",
+        example=720
+    )
+    sections: int = Field(
+        gt=0,
+        description="Số lượng sections",
+        example=15
+    )
+
+# ============== RESPONSE SCHEMA ==============
 
 class UdemyPredictionResponse(UdemyPredictionBase):
+    """
+    Response trả về sau khi dự đoán
+    Bao gồm cả raw input + kết quả dự đoán
+    """
     id: int
     prediction: str  # "Bestseller" hoặc "Not Bestseller"
     probability: float  # Xác suất dự đoán (0.0 - 1.0)
@@ -33,4 +61,3 @@ class UdemyPredictionResponse(UdemyPredictionBase):
 
     class Config:
         from_attributes = True  # Thay thế orm_mode trong Pydantic v2
-

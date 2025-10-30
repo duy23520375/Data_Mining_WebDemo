@@ -1,5 +1,5 @@
-// Feature Engineering Helper
-// Chuyển đổi input cơ bản thành 18 features cho model
+// Frontend chỉ validate và format raw input
+// Backend sẽ tự động thực hiện feature engineering
 
 export interface BasicCourseInput {
   price: number;           // VND
@@ -8,35 +8,29 @@ export interface BasicCourseInput {
   num_reviews: number;
   duration: number;        // minutes
   discount: number;        // 0-100 (percentage)
-  lectures: number;
   sections: number;
 }
 
-export interface EngineeeredFeatures {
-  rating: number;
-  num_students: number;
-  price: number;
-  discount: number;                    // 0-1 (converted from percentage)
-  lectures: number;
-  total_length_minutes: number;
-  log_num_reviews: number;
-  log_num_students: number;
-  price_capped: number;
-  log_price: number;
-  log_total_length_minutes: number;
-  sqrt_sections: number;
-  sqrt_lectures: number;
-  effective_price: number;
-  popularity_score: number;
-  rating_x_students: number;
-  price_per_hour: number;
-  discount_category: number;
+export interface RawPredictionInput {
+  rating: number;              // 0.0 - 5.0
+  discount: number;            // 0.0 - 1.0 (converted from percentage)
+  num_reviews: number;         // >= 0
+  num_students: number;        // >= 0
+  price: number;               // > 0 (VND)
+  total_length_minutes: number; // > 0 (minutes)
+  sections: number;            // > 0
 }
 
 /**
- * Chuyển đổi input cơ bản thành 18 features đã được feature engineering
+ * Chuyển đổi input từ UI thành raw input cho backend
+ * Backend sẽ tự động thực hiện:
+ * - Log transformations (num_reviews, num_students, price, duration)
+ * - Sqrt transformations (sections)
+ * - Feature engineering (effective_price, popularity_score, price_per_hour)
+ * - Discount category encoding
+ * - Scaling với RobustScaler
  */
-export function engineerFeatures(input: BasicCourseInput): EngineeeredFeatures {
+export function prepareRawInput(input: BasicCourseInput): RawPredictionInput {
   const {
     price,
     rating,
@@ -44,65 +38,20 @@ export function engineerFeatures(input: BasicCourseInput): EngineeeredFeatures {
     num_reviews,
     duration,
     discount,
-    lectures,
     sections
   } = input;
 
-  // Đảm bảo không có giá trị âm
-  const safeNumReviews = Math.max(1, num_reviews);
-  const safeNumStudents = Math.max(1, num_students);
-  const safePrice = Math.max(1, price);
-  const safeDuration = Math.max(1, duration);
-
   // Convert discount từ percentage (0-100) sang decimal (0-1)
-  const discountDecimal = discount / 100;
-
-  // Log transformations (sử dụng natural log)
-  const log_num_reviews = Math.log(safeNumReviews);
-  const log_num_students = Math.log(safeNumStudents);
-  const log_price = Math.log(safePrice);
-  const log_total_length_minutes = Math.log(safeDuration);
-
-  // Square root transformations
-  const sqrt_sections = Math.sqrt(Math.max(1, sections));
-  const sqrt_lectures = Math.sqrt(Math.max(1, lectures));
-
-  // Price capping (giới hạn giá tối đa - có thể điều chỉnh theo data)
-  const PRICE_CAP = 5000000; // 5 triệu VND
-  const price_capped = Math.min(price, PRICE_CAP);
-
-  // Derived features
-  const effective_price = price * (1 - discountDecimal); // Giá sau giảm
-  const popularity_score = rating * num_students / 2; // Điểm phổ biến
-  const rating_x_students = rating * num_students; // Rating * students
-  const price_per_hour = price / (duration / 60); // Giá mỗi giờ
-
-  // Discount category (categorical)
-  // 0: No discount, 1: Low (1-30%), 2: Medium (31-60%), 3: High (61-100%)
-  let discount_category = 0;
-  if (discount > 0 && discount <= 30) discount_category = 0;
-  else if (discount > 30 && discount <= 60) discount_category = 1;
-  else if (discount > 60) discount_category = 2;
+  const discountDecimal = Math.max(0, Math.min(1, discount / 100));
 
   return {
-    rating,
-    num_students,
-    price,
+    rating: Math.max(0, Math.min(5, rating)),
     discount: discountDecimal,
-    lectures,
-    total_length_minutes: duration,
-    log_num_reviews,
-    log_num_students,
-    price_capped,
-    log_price,
-    log_total_length_minutes,
-    sqrt_sections,
-    sqrt_lectures,
-    effective_price,
-    popularity_score,
-    rating_x_students,
-    price_per_hour,
-    discount_category
+    num_reviews: Math.max(0, num_reviews),
+    num_students: Math.max(0, num_students),
+    price: Math.max(1, price),
+    total_length_minutes: Math.max(1, duration),
+    sections: Math.max(1, sections)
   };
 }
 
@@ -115,14 +64,13 @@ export function validateCourseInput(input: BasicCourseInput): {
 } {
   const errors: string[] = [];
 
-  if (input.price < 0) errors.push('Giá phải lớn hơn hoặc bằng 0');
+  if (input.price <= 0) errors.push('Giá phải lớn hơn 0');
   if (input.rating < 0 || input.rating > 5) errors.push('Rating phải từ 0 đến 5');
   if (input.num_students < 0) errors.push('Số học viên phải >= 0');
   if (input.num_reviews < 0) errors.push('Số đánh giá phải >= 0');
   if (input.duration < 1) errors.push('Thời lượng phải >= 1 phút');
   if (input.discount < 0 || input.discount > 100) errors.push('Giảm giá phải từ 0-100%');
-  if (input.lectures < 0) errors.push('Số bài giảng phải >= 0');
-  if (input.sections < 0) errors.push('Số sections phải >= 0');
+  if (input.sections < 1) errors.push('Số sections phải >= 1');
 
   return {
     isValid: errors.length === 0,
@@ -136,13 +84,41 @@ export function validateCourseInput(input: BasicCourseInput): {
 export function getSampleData(): BasicCourseInput {
   return {
     price: 369000,
-    rating: 4.5,
+    rating: 4.9,
     num_students: 1159767,
     num_reviews: 200000,
     duration: 2564,
     discount: 81,
-    lectures: 386,
     sections: 46
   };
 }
 
+/**
+ * Format số thành chuỗi dễ đọc (VD: 1000000 -> 1,000,000)
+ */
+export function formatNumber(num: number): string {
+  return num.toLocaleString('vi-VN');
+}
+
+/**
+ * Format phần trăm (VD: 0.81 -> 81%)
+ */
+export function formatPercent(decimal: number): string {
+  return `${Math.round(decimal * 100)}%`;
+}
+
+/**
+ * Format thời gian từ phút sang giờ và phút
+ */
+export function formatDuration(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  
+  if (hours === 0) {
+    return `${mins}m`;
+  } else if (mins === 0) {
+    return `${hours}h`;
+  } else {
+    return `${hours}h ${mins}m`;
+  }
+}
