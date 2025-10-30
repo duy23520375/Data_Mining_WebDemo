@@ -88,6 +88,12 @@ const Predict = () => {
       : { text: "text-red-600", bg: "bg-red-500/20", border: "border-red-500/30" };
   };
 
+  const handlePriceInputChange = (value: string) => {
+    const numValue = parseInt(value.replace(/[^0-9]/g, '')) || 0;
+    const clampedValue = Math.min(Math.max(numValue, 0), 5000000);
+    setFormData({ ...formData, price: clampedValue });
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -107,7 +113,7 @@ const Predict = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Price Slider */}
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <Label className="flex justify-between">
                   <span className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-primary" />
@@ -122,6 +128,27 @@ const Predict = () => {
                   step={100000}
                   className="py-4"
                 />
+                
+                {/* Price Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="price-input" className="text-sm text-muted-foreground">
+                    Enter exact price:
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="price-input"
+                      type="text"
+                      value={formData.price.toLocaleString()}
+                      onChange={(e) => handlePriceInputChange(e.target.value)}
+                      className="bg-background/50 pl-8"
+                      placeholder="Enter price in VND"
+                    />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      đ
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Rating Slider */}
