@@ -1,5 +1,5 @@
 // Feature Engineering Helper
-// Chuyển đổi input cơ bản thành 18 features cho model
+// Chuyển đổi input cơ bản thành 11 features cho model
 
 export interface BasicCourseInput {
   price: number;           // VND
@@ -14,27 +14,20 @@ export interface BasicCourseInput {
 
 export interface EngineeeredFeatures {
   rating: number;
-  num_students: number;
-  price: number;
   discount: number;                    // 0-1 (converted from percentage)
-  lectures: number;
-  total_length_minutes: number;
   log_num_reviews: number;
   log_num_students: number;
-  price_capped: number;
   log_price: number;
   log_total_length_minutes: number;
   sqrt_sections: number;
-  sqrt_lectures: number;
   effective_price: number;
   popularity_score: number;
-  rating_x_students: number;
   price_per_hour: number;
   discount_category: number;
 }
 
 /**
- * Chuyển đổi input cơ bản thành 18 features đã được feature engineering
+ * Chuyển đổi input cơ bản thành 11 features đã được feature engineering
  */
 export function engineerFeatures(input: BasicCourseInput): EngineeeredFeatures {
   const {
@@ -65,16 +58,10 @@ export function engineerFeatures(input: BasicCourseInput): EngineeeredFeatures {
 
   // Square root transformations
   const sqrt_sections = Math.sqrt(Math.max(1, sections));
-  const sqrt_lectures = Math.sqrt(Math.max(1, lectures));
-
-  // Price capping (giới hạn giá tối đa - có thể điều chỉnh theo data)
-  const PRICE_CAP = 5000000; // 5 triệu VND
-  const price_capped = Math.min(price, PRICE_CAP);
 
   // Derived features
   const effective_price = price * (1 - discountDecimal); // Giá sau giảm
   const popularity_score = rating * num_students / 2; // Điểm phổ biến
-  const rating_x_students = rating * num_students; // Rating * students
   const price_per_hour = price / (duration / 60); // Giá mỗi giờ
 
   // Discount category (categorical)
@@ -86,21 +73,14 @@ export function engineerFeatures(input: BasicCourseInput): EngineeeredFeatures {
 
   return {
     rating,
-    num_students,
-    price,
     discount: discountDecimal,
-    lectures,
-    total_length_minutes: duration,
     log_num_reviews,
     log_num_students,
-    price_capped,
     log_price,
     log_total_length_minutes,
     sqrt_sections,
-    sqrt_lectures,
     effective_price,
     popularity_score,
-    rating_x_students,
     price_per_hour,
     discount_category
   };
