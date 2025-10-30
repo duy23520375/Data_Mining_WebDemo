@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Star, Users, Clock, TrendingUp, Sparkles, Target, BookOpen, AlertCircle } from "lucide-react";
+import { Search, Star, Users, Clock, TrendingUp, Sparkles, Target, BookOpen, AlertCircle, X } from "lucide-react";
 import { apiService, type RecommendationResponse, type Course } from "@/services/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -11,8 +11,17 @@ const Recommend = () => {
   const [targetTopic, setTargetTopic] = useState("");
   const [recommendations, setRecommendations] = useState<RecommendationResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState("");
   const [availableTopics, setAvailableTopics] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const suggestedTopics = [
+    'AI Engineer', 'Data Scientist', 'NLP Engineer', 'Computer Vision', 'Web Developer', 
+    'Software Engineer', 'Full Stack Developer', 'Backend Developer', 'Solutions Architect', 
+    'DevOps Engineer', 'Cloud Engineer', 'Data Engineer', 'Data Analyst'
+  ];
 
   // Load available topics khi component mount
   useEffect(() => {
@@ -27,135 +36,49 @@ const Recommend = () => {
     loadTopics();
   }, []);
 
-  // Popular suggested topics
-  const suggestedTopics = [
-    "Machine Learning",
-    "React JS", 
-    "Python",
-    "Data Science",
-    "Deep Learning",
-    "JavaScript",
-    "Artificial Intelligence (AI)",
-    "Web Development"
-  ];
+  // Filter suggestions based on input - chỉ lấy những từ BẮT ĐẦU bằng chữ đang nhập
+  useEffect(() => {
+    if (targetTopic.trim()) {
+      const allSuggestions = [...suggestedTopics, ...availableTopics];
+      const filtered = allSuggestions.filter(topic =>
+        topic.toLowerCase().startsWith(targetTopic.toLowerCase())
+      );
+      setFilteredSuggestions(filtered.slice(0, 5)); // Limit to 5 suggestions
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [targetTopic, availableTopics]);
 
-  // Mock course database (DEPRECATED - now using API)
-  const courseDatabase_DEPRECATED = [
-    {
-      id: 1,
-      title: "Complete Python Bootcamp: Go from zero to hero in Python 3",
-      instructor: "Jose Portilla",
-      rating: 4.6,
-      students: 1250000,
-      price: 84.99,
-      duration: "22 hours",
-      level: "Beginner",
-      category: "Development",
-      isBestseller: true,
-      skills: ["python", "programming", "data science", "ai", "machine learning"],
-      careers: ["ai engineer", "data scientist", "python developer", "ml engineer"]
-    },
-    {
-      id: 2,
-      title: "Machine Learning A-Z™: AI, Python & R",
-      instructor: "Kirill Eremenko",
-      rating: 4.5,
-      students: 950000,
-      price: 94.99,
-      duration: "44 hours",
-      level: "Intermediate",
-      category: "Data Science",
-      isBestseller: true,
-      skills: ["machine learning", "ai", "python", "deep learning", "neural networks"],
-      careers: ["ai engineer", "ml engineer", "data scientist", "ai researcher"]
-    },
-    {
-      id: 3,
-      title: "Deep Learning Specialization",
-      instructor: "Andrew Ng",
-      rating: 4.8,
-      students: 750000,
-      price: 99.99,
-      duration: "36 hours",
-      level: "Advanced",
-      category: "AI & ML",
-      isBestseller: true,
-      skills: ["deep learning", "neural networks", "tensorflow", "ai", "computer vision"],
-      careers: ["ai engineer", "ml engineer", "deep learning engineer", "ai researcher"]
-    },
-    {
-      id: 4,
-      title: "The Web Developer Bootcamp 2024",
-      instructor: "Colt Steele",
-      rating: 4.7,
-      students: 850000,
-      price: 79.99,
-      duration: "63.5 hours",
-      level: "Beginner",
-      category: "Development",
-      isBestseller: true,
-      skills: ["html", "css", "javascript", "react", "node.js", "web development"],
-      careers: ["web developer", "frontend developer", "fullstack developer", "software engineer"]
-    },
-    {
-      id: 5,
-      title: "React - The Complete Guide 2024",
-      instructor: "Maximilian Schwarzmüller",
-      rating: 4.6,
-      students: 620000,
-      price: 89.99,
-      duration: "48 hours",
-      level: "Intermediate",
-      category: "Development",
-      isBestseller: true,
-      skills: ["react", "javascript", "frontend", "web development", "hooks"],
-      careers: ["frontend developer", "react developer", "web developer", "ui developer"]
-    },
-    {
-      id: 6,
-      title: "AWS Certified Solutions Architect",
-      instructor: "Stephane Maarek",
-      rating: 4.7,
-      students: 680000,
-      price: 84.99,
-      duration: "27 hours",
-      level: "Intermediate",
-      category: "Cloud Computing",
-      isBestseller: true,
-      skills: ["aws", "cloud", "devops", "infrastructure", "architecture"],
-      careers: ["cloud architect", "devops engineer", "cloud engineer", "solutions architect"]
-    },
-    {
-      id: 7,
-      title: "Natural Language Processing - NLP with Python",
-      instructor: "Jose Portilla",
-      rating: 4.5,
-      students: 420000,
-      price: 89.99,
-      duration: "18 hours",
-      level: "Advanced",
-      category: "AI & ML",
-      isBestseller: false,
-      skills: ["nlp", "python", "ai", "text processing", "machine learning"],
-      careers: ["ai engineer", "nlp engineer", "ml engineer", "data scientist"]
-    },
-  ];
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleRecommend = async () => {
     if (!targetTopic.trim()) return;
-    
+   
     setIsLoading(true);
     setError("");
     setRecommendations(null);
-    
+    setShowSuggestions(false);
+   
     try {
-      // Gọi API để lấy recommendations
       const response = await apiService.getRecommendations({
         target_topic: targetTopic,
-        max_steps: undefined, // Lấy toàn bộ path
+        max_steps: undefined,
         courses_per_step: 3
       });
-      
+     
       if (response.success) {
         setRecommendations(response);
       } else {
@@ -167,6 +90,20 @@ const Recommend = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNewSearch = () => {
+    setTargetTopic("");
+    setRecommendations(null);
+    setError("");
+    setShowSuggestions(true);
+    inputRef.current?.focus();
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setTargetTopic(suggestion);
+    setShowSuggestions(false);
+    inputRef.current?.focus();
   };
 
   const formatPrice = (price: number) => {
@@ -198,24 +135,62 @@ const Recommend = () => {
           <div className="max-w-2xl mx-auto space-y-4">
             <Card className="gradient-card border-border/50 p-6">
               <div className="space-y-4">
-                <div className="relative">
+                <div className="relative" ref={inputRef}>
                   <Target className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
-                    placeholder="Ví dụ: Machine Learning, React JS, Python, Data Science..."
+                    ref={inputRef}
+                    placeholder="Ví dụ: AI Engineer, Data Scientist, Web Developer, Cloud Engineer..."
                     value={targetTopic}
                     onChange={(e) => setTargetTopic(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleRecommend()}
+                    onFocus={() => targetTopic.trim() && setShowSuggestions(true)}
                     className="pl-10 h-12 bg-card/50 border-border/50"
                   />
+                  
+                  {/* Search Suggestions Dropdown */}
+                  {showSuggestions && filteredSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 bg-card border border-border/50 rounded-md shadow-lg z-10 mt-1 max-h-60 overflow-y-auto">
+                      {filteredSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="px-4 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors border-b border-border/50 last:border-b-0"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSuggestionClick(suggestion);
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Search className="w-4 h-4 text-muted-foreground" />
+                            <span>{suggestion}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <Button 
-                  onClick={handleRecommend} 
-                  disabled={!targetTopic.trim() || isLoading}
-                  className="w-full bg-primary hover:bg-primary/90 shadow-glow"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  {isLoading ? "Đang tìm kiếm..." : "Tìm Learning Path"}
-                </Button>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleRecommend}
+                    disabled={!targetTopic.trim() || isLoading}
+                    className="flex-1 bg-primary hover:bg-primary/90 shadow-glow"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    {isLoading ? "Đang tìm kiếm..." : "Tìm Learning Path"}
+                  </Button>
+                  
+                  {recommendations && (
+                    <Button
+                      onClick={handleNewSearch}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      New Search
+                    </Button>
+                  )}
+                </div>
               </div>
             </Card>
 
@@ -230,7 +205,7 @@ const Recommend = () => {
                     size="sm"
                     onClick={() => {
                       setTargetTopic(topic);
-                      setTimeout(() => handleRecommend(), 100);
+                      // Chỉ set topic, không tự động tìm kiếm
                     }}
                     className="text-xs"
                   >
@@ -255,11 +230,13 @@ const Recommend = () => {
           <div className="space-y-6 animate-fade-in-up">
             {/* Header */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <h2 className="text-2xl font-semibold">
-                  Learning Path: {recommendations.target_topic}
-                </h2>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  <h2 className="text-2xl font-semibold">
+                    Learning Path: {recommendations.target_topic}
+                  </h2>
+                </div>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
@@ -359,7 +336,7 @@ const Recommend = () => {
             <Search className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
             <h3 className="text-xl font-semibold mb-2">Chưa có kết quả</h3>
             <p className="text-muted-foreground">
-              Hãy thử tìm kiếm với các topic như "Machine Learning", "React JS", hoặc "Python"
+              Hãy thử tìm kiếm với các topic như "AI Engineer", "Data Scientist", hoặc "Web Developer"
             </p>
           </Card>
         )}
