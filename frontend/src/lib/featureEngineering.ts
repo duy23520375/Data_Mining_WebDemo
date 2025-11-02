@@ -8,6 +8,7 @@ export interface BasicCourseInput {
   num_reviews: number;
   duration: number;        // minutes
   discount: number;        // 0-100 (percentage)
+  lectures: number;
   sections: number;
 }
 
@@ -19,13 +20,14 @@ export interface RawPredictionInput {
   price: number;               // > 0 (VND)
   total_length_minutes: number; // > 0 (minutes)
   sections: number;            // > 0
+  lectures: number;            // > 0
 }
 
 /**
  * Chuyển đổi input từ UI thành raw input cho backend
  * Backend sẽ tự động thực hiện:
  * - Log transformations (num_reviews, num_students, price, duration)
- * - Sqrt transformations (sections)
+ * - Sqrt transformations (sections, lectures)
  * - Feature engineering (effective_price, popularity_score, price_per_hour)
  * - Discount category encoding
  * - Scaling với RobustScaler
@@ -38,6 +40,7 @@ export function prepareRawInput(input: BasicCourseInput): RawPredictionInput {
     num_reviews,
     duration,
     discount,
+    lectures,
     sections
   } = input;
 
@@ -51,7 +54,8 @@ export function prepareRawInput(input: BasicCourseInput): RawPredictionInput {
     num_students: Math.max(0, num_students),
     price: Math.max(1, price),
     total_length_minutes: Math.max(1, duration),
-    sections: Math.max(1, sections)
+    sections: Math.max(1, sections),
+    lectures: Math.max(1, lectures)
   };
 }
 
@@ -70,6 +74,7 @@ export function validateCourseInput(input: BasicCourseInput): {
   if (input.num_reviews < 0) errors.push('Số đánh giá phải >= 0');
   if (input.duration < 1) errors.push('Thời lượng phải >= 1 phút');
   if (input.discount < 0 || input.discount > 100) errors.push('Giảm giá phải từ 0-100%');
+  if (input.lectures < 1) errors.push('Số lectures phải >= 1');
   if (input.sections < 1) errors.push('Số sections phải >= 1');
 
   return {
@@ -89,6 +94,7 @@ export function getSampleData(): BasicCourseInput {
     num_reviews: 200000,
     duration: 2564,
     discount: 81,
+    lectures: 120,
     sections: 46
   };
 }
