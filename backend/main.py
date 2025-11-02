@@ -57,7 +57,7 @@ async def predict(input_data: PredictionInput, db: Session = Depends(get_db)):
     """
     Endpoint dự đoán khóa học Udemy có phải Bestseller không
     
-    Input: 18 features sau feature engineering
+    Input: 8 raw features (backend sẽ tự động feature engineering thành 12 features)
     Output: Bestseller hoặc Not Bestseller với xác suất
     """
     try:

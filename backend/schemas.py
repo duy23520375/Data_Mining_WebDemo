@@ -2,11 +2,11 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 
-# ============== RAW INPUT SCHEMA (7 features) ==============
+# ============== RAW INPUT SCHEMA (8 features) ==============
 
 class UdemyPredictionBase(BaseModel):
     """
-    RAW INPUT từ người dùng - 7 features cơ bản
+    RAW INPUT từ người dùng - 8 features cơ bản
     Backend sẽ tự động thực hiện feature engineering
     """
     rating: float = Field(
@@ -45,6 +45,11 @@ class UdemyPredictionBase(BaseModel):
         gt=0,
         description="Số lượng sections",
         example=15
+    )
+    lectures: int = Field(
+        gt=0,
+        description="Số lượng lectures",
+        example=120
     )
 
 # ============== RESPONSE SCHEMA ==============

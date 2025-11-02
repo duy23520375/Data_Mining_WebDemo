@@ -7,7 +7,7 @@ class UdemyPrediction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     
-    # RAW INPUT FEATURES (7 features gốc từ user)
+    # RAW INPUT FEATURES (8 features gốc từ user)
     rating = Column(Float, nullable=False)
     discount = Column(Float, nullable=False)
     num_reviews = Column(Integer, nullable=False)
@@ -15,6 +15,7 @@ class UdemyPrediction(Base):
     price = Column(Float, nullable=False)
     total_length_minutes = Column(Integer, nullable=False)
     sections = Column(Integer, nullable=False)
+    lectures = Column(Integer, nullable=False)
     
     # PREDICTION OUTPUT
     prediction = Column(String, nullable=False)  # "Bestseller" hoặc "Not Bestseller"
