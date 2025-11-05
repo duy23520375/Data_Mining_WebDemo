@@ -178,8 +178,16 @@ const Predict = () => {
                 </Label>
                 <Input
                   type="number"
-                  value={formData.students}
-                  onChange={(e) => setFormData({ ...formData, students: parseInt(e.target.value) || 0 })}
+                  inputMode="numeric"
+                  placeholder="Nhập số lượng học viên"
+                  value={formData.students === 0 ? "" : formData.students}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setFormData({
+                      ...formData,
+                      students: v === "" ? 0 : parseInt(v)
+                    });
+                  }}
                   className="bg-background/50"
                 />
               </div>
@@ -192,8 +200,16 @@ const Predict = () => {
                 </Label>
                 <Input
                   type="number"
-                  value={formData.reviews}
-                  onChange={(e) => setFormData({ ...formData, reviews: parseInt(e.target.value) || 0 })}
+                  inputMode="numeric"
+                  placeholder="Nhập số lượng đánh giá"
+                  value={formData.reviews === 0 ? "" : formData.reviews}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setFormData({
+                      ...formData,
+                      reviews: v === "" ? 0 : parseInt(v)
+                    });
+                  }}
                   className="bg-background/50"
                 />
               </div>
@@ -206,8 +222,16 @@ const Predict = () => {
                 </Label>
                 <Input
                   type="number"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 0 })}
+                  inputMode="numeric"
+                  placeholder="Nhập tổng thời lượng (phút)"
+                  value={formData.duration === 0 ? "" : formData.duration}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setFormData({
+                      ...formData,
+                      duration: v === "" ? 0 : parseInt(v)
+                    });
+                  }}
                   className="bg-background/50"
                 />
               </div>
@@ -236,8 +260,16 @@ const Predict = () => {
                   <Label>Lectures</Label>
                   <Input
                     type="number"
-                    value={formData.lectures}
-                    onChange={(e) => setFormData({ ...formData, lectures: parseInt(e.target.value) || 0 })}
+                    inputMode="numeric"
+                    placeholder="Nhập số bài giảng"
+                    value={formData.lectures === 0 ? "" : formData.lectures}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setFormData({
+                        ...formData,
+                        lectures: v === "" ? 0 : parseInt(v)
+                      });
+                    }}
                     className="bg-background/50"
                   />
                 </div>
@@ -245,8 +277,16 @@ const Predict = () => {
                   <Label>Sections</Label>
                   <Input
                     type="number"
-                    value={formData.sections}
-                    onChange={(e) => setFormData({ ...formData, sections: parseInt(e.target.value) || 0 })}
+                    inputMode="numeric"
+                    placeholder="Nhập số chương"
+                    value={formData.sections === 0 ? "" : formData.sections}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setFormData({
+                        ...formData,
+                        sections: v === "" ? 0 : parseInt(v)
+                      });
+                    }}
                     className="bg-background/50"
                   />
                 </div>
